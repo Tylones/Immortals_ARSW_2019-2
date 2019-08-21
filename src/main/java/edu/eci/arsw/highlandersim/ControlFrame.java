@@ -20,6 +20,11 @@ import java.awt.event.ActionEvent;
 import javax.swing.JLabel;
 import javax.swing.JTextField;
 import java.awt.Color;
+import java.util.ArrayList;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JScrollBar;
 
 public class ControlFrame extends JFrame {
@@ -71,6 +76,11 @@ public class ControlFrame extends JFrame {
             public void actionPerformed(ActionEvent e) {
 
                 immortals = setupInmortals();
+                ArrayList<Lock> fightLocks = new ArrayList<Lock>();
+                for(int i = 0; i < immortals.size(); i++){
+                        fightLocks.add(new ReentrantLock());
+                }
+                Immortal.setFightLocks(fightLocks);
 
                 if (immortals != null) {
                     for (Immortal im : immortals) {
@@ -91,12 +101,15 @@ public class ControlFrame extends JFrame {
                 /*
 				 * COMPLETAR
                  */
+                Immortal.pauseOrResume();                
                 int sum = 0;
                 for (Immortal im : immortals) {
                     sum += im.getHealth();
                 }
 
                 statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
+                
+                
                 
                 
 
@@ -111,6 +124,7 @@ public class ControlFrame extends JFrame {
                 /**
                  * IMPLEMENTAR
                  */
+                Immortal.pauseOrResume();
 
             }
         });
