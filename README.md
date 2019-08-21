@@ -71,7 +71,7 @@ If the three immortals want to fight at the same time, an interlocking situation
 
 ### 8)
 
-
+VOIR CHAPITRE 15
 
 
 
