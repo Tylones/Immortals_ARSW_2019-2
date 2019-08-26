@@ -40,6 +40,7 @@ public class ControlFrame extends JFrame {
     private JLabel statisticsLabel;
     private JScrollPane scrollPane;
     private JTextField numOfImmortals;
+    private boolean started = false;
 
     /**
      * Launch the application.
@@ -89,6 +90,7 @@ public class ControlFrame extends JFrame {
                 }
 
                 btnStart.setEnabled(false);
+                started = true;
 
             }
         });
@@ -101,13 +103,19 @@ public class ControlFrame extends JFrame {
                 /*
 				 * COMPLETAR
                  */
-                Immortal.pauseOrResume();                
-                int sum = 0;
-                for (Immortal im : immortals) {
-                    sum += im.getHealth();
-                }
+                synchronized(Immortal.pauseLock){
+                    Immortal.pauseOrResume();   
+                    
+                    int sum = 0;
+                    for (Immortal im : immortals) {
+                        sum += im.getHealth();
+                    }
+                    statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
+                    Immortal.pauseLock.notifyAll();
+                }            
+                
 
-                statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
+                
                 
                 
                 
@@ -124,6 +132,10 @@ public class ControlFrame extends JFrame {
                 /**
                  * IMPLEMENTAR
                  */
+                synchronized(Immortal.pauseLock){
+                    Immortal.pauseLock.notifyAll();
+                }
+
                 Immortal.pauseOrResume();
 
             }
@@ -140,6 +152,31 @@ public class ControlFrame extends JFrame {
         numOfImmortals.setColumns(10);
 
         JButton btnStop = new JButton("STOP");
+        btnStop.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e) {
+
+                /*
+				 * COMPLETAR
+                 */
+
+                 if(started){
+                     started=false;
+
+                 for(Immortal im : immortals){
+                     im.stop();
+                     
+
+                 }
+
+                 immortals = null;
+                 statisticsLabel.setText("");
+                 btnStart.setEnabled(true);
+                 
+                }
+            }
+
+
+        });
         btnStop.setForeground(Color.RED);
         toolBar.add(btnStop);
 

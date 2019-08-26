@@ -3,6 +3,7 @@ package edu.eci.arsw.highlandersim;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -10,7 +11,7 @@ public class Immortal extends Thread {
 
     private ImmortalUpdateReportCallback updateCallback=null;
     
-    private int health;
+    private AtomicInteger health;
     
     private int defaultDamageValue;
 
@@ -23,6 +24,8 @@ public class Immortal extends Thread {
     private volatile static boolean isPaused = false;
     
     private static ArrayList<Lock> fightLocks = new ArrayList<Lock>();
+    
+    public static Object pauseLock = new Object();
 
 
     public Immortal(String name, List<Immortal> immortalsPopulation, int health, int defaultDamageValue, ImmortalUpdateReportCallback ucb) {
@@ -31,18 +34,24 @@ public class Immortal extends Thread {
         this.updateCallback=ucb;
         this.name = name;
         this.immortalsPopulation = immortalsPopulation;
-        this.health = health;
+        this.health = new AtomicInteger(health);
         this.defaultDamageValue=defaultDamageValue;
     }
 
     public void run() {
 
         while (true) {
+
             Immortal im;
 
             int myIndex = immortalsPopulation.indexOf(this);
 
             int nextFighterIndex = r.nextInt(immortalsPopulation.size());
+
+            if(this.getHealth() == 0){
+                immortalsPopulation.remove(myIndex);
+                this.stop();
+            }
 
             //avoid self-fight
             if (nextFighterIndex == myIndex) {
@@ -51,11 +60,18 @@ public class Immortal extends Thread {
 
             im = immortalsPopulation.get(nextFighterIndex);
 
-            this.fight(im);
+            try {
+                this.fight(im);
+            } catch (InterruptedException e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
 
             try {
                 while(isPaused){
-                    yield();
+                    synchronized(pauseLock){
+                        pauseLock.wait();
+                    }
                 }
                 Thread.sleep(1);
             } catch (InterruptedException e) {
@@ -66,7 +82,7 @@ public class Immortal extends Thread {
 
     }
 
-    public void fight(Immortal i2) {
+    public void fight(Immortal i2) throws InterruptedException {
         int myIndex = immortalsPopulation.indexOf(this);
 
         int nextFighterIndex = r.nextInt(immortalsPopulation.size());
@@ -76,13 +92,19 @@ public class Immortal extends Thread {
             nextFighterIndex = ((nextFighterIndex + 1) % immortalsPopulation.size());
         }
         while(true){
+            while(isPaused){
+                synchronized(pauseLock){
+                    pauseLock.wait();
+                }
+                
+            }
             if(fightLocks.get(myIndex).tryLock()){
                 boolean fightDone = false;
                 if(fightLocks.get(nextFighterIndex).tryLock()){
                     fightDone = true;
                     if (i2.getHealth() > 0) {
                         i2.changeHealth(i2.getHealth() - defaultDamageValue);
-                        this.health += defaultDamageValue;
+                        changeHealth(this.health.get() + defaultDamageValue);
         
         
                         updateCallback.processReport("Fight: " + this + " vs " + i2+"\n");
@@ -100,12 +122,12 @@ public class Immortal extends Thread {
        
     }
 
-    public synchronized void changeHealth(int v) {
-        health = v; 
+    public void changeHealth(int v) {
+        health.set(v);
     }
 
-    public synchronized int getHealth() {
-        return health;
+    public int getHealth() {
+        return health.get();
         
         
     }
