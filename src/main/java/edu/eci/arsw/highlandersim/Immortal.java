@@ -75,22 +75,29 @@ public class Immortal extends Thread {
         if (nextFighterIndex == myIndex) {
             nextFighterIndex = ((nextFighterIndex + 1) % immortalsPopulation.size());
         }
-
-       synchronized(fightLocks.get(myIndex)){
-           synchronized(fightLocks.get(nextFighterIndex)){
-               if (i2.getHealth() > 0) {
-                i2.changeHealth(i2.getHealth() - defaultDamageValue);
-                this.health += defaultDamageValue;
-
-
-                updateCallback.processReport("Fight: " + this + " vs " + i2+"\n");
-                } else {
-                    updateCallback.processReport(this + " says:" + i2 + " is already dead!\n");
-
+        while(true){
+            if(fightLocks.get(myIndex).tryLock()){
+                boolean fightDone = false;
+                if(fightLocks.get(nextFighterIndex).tryLock()){
+                    fightDone = true;
+                    if (i2.getHealth() > 0) {
+                        i2.changeHealth(i2.getHealth() - defaultDamageValue);
+                        this.health += defaultDamageValue;
+        
+        
+                        updateCallback.processReport("Fight: " + this + " vs " + i2+"\n");
+                        } else {
+                            updateCallback.processReport(this + " says:" + i2 + " is already dead!\n");
+        
+                        }
+                    fightLocks.get(nextFighterIndex).unlock();
                 }
-           }
-            
-       }
+                fightLocks.get(myIndex).unlock();
+                if(fightDone)
+                    break;
+            }
+        }
+       
     }
 
     public synchronized void changeHealth(int v) {
