@@ -104,7 +104,7 @@ Unfortunately, the invariant is being broken when using more immortals. I don't 
 
 ### 10)
 
-* 1) It seems that, even by removing immortals as they die, it is possible for immortals to try to fight them before they're getting removed. 
+* 1) It seems that, even by removing immortals as they die, it is possible for immortals to try to fight them before they're getting removed. Moreover, I'm not sure how an List works in java, but it could be possible that, when two sequential elements try to remove themselves at the same time, a problem could arise when trying to set the previous or next element. 
 
 * 2) ```
             if(this.getHealth() == 0){
