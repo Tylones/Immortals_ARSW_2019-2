@@ -110,6 +110,9 @@ public class ControlFrame extends JFrame {
                         
                     }
                 }    */
+                while(Immortal.numberOfPausedImmortal.get() != immortals.size() -1){
+
+                }
                 
                 int sum = 0;
                 for (Immortal im : immortals) {
@@ -128,7 +131,7 @@ public class ControlFrame extends JFrame {
                 /**
                  * IMPLEMENTAR
                  */
-
+                Immortal.numberOfPausedImmortal.set(0);
                 Immortal.unpause();
 
             }
@@ -153,17 +156,18 @@ public class ControlFrame extends JFrame {
                  */
 
                  if(started){
-                     started=false;
+                    started=false;
+                    
+                    Immortal.unpause();
 
-                 for(Immortal im : immortals){
-                     im.stop();
-                     
+                    for(Immortal im : immortals){
+                        im.stop();
+                        
 
-                 }
-
-                 immortals = null;
-                 statisticsLabel.setText("");
-                 btnStart.setEnabled(true);
+                    }
+                    Immortal.unpause();
+                    statisticsLabel.setText("");
+                    btnStart.setEnabled(true);
                  
                 }
             }
