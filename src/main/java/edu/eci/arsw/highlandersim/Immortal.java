@@ -22,11 +22,11 @@ public class Immortal extends Thread {
     private final Random r = new Random(System.currentTimeMillis());
     
     private volatile static boolean isPaused = false;
+
+    private boolean thisThreadIsPaused = false;
     
     private static ArrayList<Lock> fightLocks = new ArrayList<Lock>();
     
-    public static Object pauseLock = new Object();
-
 
     public Immortal(String name, List<Immortal> immortalsPopulation, int health, int defaultDamageValue, ImmortalUpdateReportCallback ucb) {
         super(name);
@@ -69,10 +69,11 @@ public class Immortal extends Thread {
 
             try {
                 while(isPaused){
-                    synchronized(pauseLock){
-                        pauseLock.wait();
-                    }
+                    thisThreadIsPaused = true;
+                    yield();
                 }
+                if(thisThreadIsPaused && !isPaused)
+                    thisThreadIsPaused = false;
                 Thread.sleep(1);
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -92,12 +93,15 @@ public class Immortal extends Thread {
             nextFighterIndex = ((nextFighterIndex + 1) % immortalsPopulation.size());
         }
         while(true){
+
+            // Checkin
             while(isPaused){
-                synchronized(pauseLock){
-                    pauseLock.wait();
-                }
-                
+                thisThreadIsPaused = true;
+                yield();
             }
+            if(thisThreadIsPaused && !isPaused)
+                    thisThreadIsPaused = false;
+                    
             if(fightLocks.get(myIndex).tryLock()){
                 boolean fightDone = false;
                 if(fightLocks.get(nextFighterIndex).tryLock()){
@@ -138,12 +142,20 @@ public class Immortal extends Thread {
         return name + "[" + health + "]";
     }
     
-    public static void pauseOrResume() {
-        Immortal.isPaused = !Immortal.isPaused;
+    public static void pause() {
+        Immortal.isPaused = true;
+    }
+
+    public static void unpause(){
+        Immortal.isPaused = false;
     }
     
     public static void setFightLocks(ArrayList<Lock> a) {
         Immortal.fightLocks = a;
+    }
+
+    public boolean threadIsPaused(){
+        return this.thisThreadIsPaused;
     }
 
 }

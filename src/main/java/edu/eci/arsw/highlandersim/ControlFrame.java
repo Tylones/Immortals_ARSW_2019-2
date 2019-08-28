@@ -103,23 +103,19 @@ public class ControlFrame extends JFrame {
                 /*
 				 * COMPLETAR
                  */
-                synchronized(Immortal.pauseLock){
-                    Immortal.pauseOrResume();   
-                    
-                    int sum = 0;
-                    for (Immortal im : immortals) {
-                        sum += im.getHealth();
+                
+                Immortal.pause();
+            /*     for (Immortal im : immortals){
+                    while(!im.threadIsPaused()){
+                        
                     }
-                    statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
-                    Immortal.pauseLock.notifyAll();
-                }            
+                }    */
                 
-
-                
-                
-                
-                
-                
+                int sum = 0;
+                for (Immortal im : immortals) {
+                    sum += im.getHealth();
+                }
+                statisticsLabel.setText("<html>"+immortals.toString()+"<br>Health sum:"+ sum);
 
             }
         });
@@ -132,11 +128,8 @@ public class ControlFrame extends JFrame {
                 /**
                  * IMPLEMENTAR
                  */
-                synchronized(Immortal.pauseLock){
-                    Immortal.pauseLock.notifyAll();
-                }
 
-                Immortal.pauseOrResume();
+                Immortal.unpause();
 
             }
         });
@@ -182,7 +175,6 @@ public class ControlFrame extends JFrame {
 
         scrollPane = new JScrollPane();
         contentPane.add(scrollPane, BorderLayout.CENTER);
-
         output = new JTextArea();
         output.setEditable(false);
         scrollPane.setViewportView(output);
