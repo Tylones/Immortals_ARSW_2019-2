@@ -14,13 +14,11 @@ The consumption of the corresponding process is about 12.5% of the CPU time (see
 
 By using a solution with threads using *wait()* and *notify()* to avoid using the CPU to check if the queue is empty or full, we can observe that the process uses a lot less of CPU time (from 12.5% to almost 0%).
 
-*add image*
 
 ### 3)
 
 By using a very small queue, a producter producing very fast (Only waiting 1ms between two productions) and a consumer consuming very fast (waiting 1000ms between consuming two elements), the application doesn't crash and the CPU usage stays low (almost 0% CPU time).
 
-*add image*
 
 ## Part 2
 
@@ -71,7 +69,53 @@ If the three immortals want to fight at the same time, an interlocking situation
 
 ### 8)
 
-VOIR CHAPITRE 15
+To solve this problem, I am using one ReetrantLock per immortal. Those locks are being stored in an ArrayList. When trying to fight another immortal, the immortal A will ask for his lock in the arrayList, then ask for the lock of the immortal B.
+For this to be non blocking, I am using the *tryLock()* function nested in a while loop :
+
+```
+while(true){
+
+            if(fightLocks.get(myIndex).tryLock()){
+                boolean fightDone = false;
+                if(fightLocks.get(nextFighterIndex).tryLock()){
+                    fightDone = true;
+                    if (i2.getHealth() > 0) {
+                        i2.changeHealth(i2.getHealth() - defaultDamageValue);
+                        changeHealth(this.health.get() + defaultDamageValue);
+        
+        
+                        updateCallback.processReport("Fight: " + this + " vs " + i2+"\n");
+                        } else {
+                            updateCallback.processReport(this + " says:" + i2 + " is already dead!\n");
+        
+                        }
+                    fightLocks.get(nextFighterIndex).unlock();
+                }
+                fightLocks.get(myIndex).unlock();
+                if(fightDone)
+                    break;
+            }
+        }
+```
+
+### 9)
+
+Unfortunately, the invariant is being broken when using more immortals. I don't know why. I've investigated the fact that all threads have to be paused before calculating the sum (using booleans, using an AtomicCounter...etc), but this doesn't seem to work. 
+
+### 10)
+
+* 1) It seems that, even by removing immortals as they die, it is possible for immortals to try to fight them before they're getting removed. 
+
+* 2) ```
+            if(this.getHealth() == 0){
+                immortalsPopulation.remove(myIndex);
+                this.stop();
+            } 
+     ```
+
+### 11)
+
+Stop function has been implemented
 
 
 
